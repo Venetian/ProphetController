@@ -10,10 +10,17 @@
 #include "SaitekX52controller.h"
 
 SaitekX52controller::SaitekX52controller(){
+	
+	for (int i = 0; i < AXES_LENGTH; i++)
+		axesChanged[i] = 0;
+	
+	for (int i = 0; i < BUTTONS_LENGTH; i++)
+		buttonsChanged[i] = 0;
 }
 
 SaitekX52controller::~SaitekX52controller()
 {
+	
 	hid_close(handle);
 	hid_exit();
 }
@@ -37,13 +44,20 @@ void SaitekX52controller::init()
 		printf("\n");
 		printf("  Manufacturer: %ls\n", cur_dev->manufacturer_string);
 		printf("  Product:      %ls\n", cur_dev->product_string);
+		std::wcout << L"product is '" << cur_dev->product_string << L"'"<< std::endl;
 		
-		printf("\n");
 		
 		HIDdevice newDev;
 		newDev.vendorID = cur_dev->vendor_id;
 		newDev.productID = cur_dev->product_id;
 		newDev.productDescription = cur_dev->product_string;
+		wchar_t* newMem = new wchar_t[100];
+		newDev.productDescription = newMem;
+		wcscpy(newDev.productDescription, cur_dev->product_string);
+		std::wcout << L"copied product is '" << newDev.productDescription << L"'"<< std::endl;
+		std::cout << "memory is " << &newDev.productDescription << std::endl;
+		
+		printf("\n");
 		devices.push_back(newDev);
 		
 		cur_dev = cur_dev->next;
@@ -87,16 +101,25 @@ void SaitekX52controller::init()
 }
 
 int SaitekX52controller::openDevice(int deviceIndex){
-	//hid_close(handle);
 	
+	printf("open device index %i out of %i\n", deviceIndex, (int)devices.size());
+	
+	const wchar_t* testw = L"yessir";//for testing
 	if (deviceIndex >= 0 && deviceIndex < devices.size())
 	{
-		printf("%s\n", devices[deviceIndex].productDescription);
-//		if (handle = hid_open(devices[deviceIndex].vendorID, devices[deviceIndex].productID, NULL))
+		std::wcout << L"cout gives " << testw << std::endl;//devices[deviceIndex].productDescription << std::endl; 
+		std::wcout << L"cout stored gives " << devices[deviceIndex].productDescription << std::endl;// << std::endl; 
+		
+		std::wcout << L"copied product is '" << devices[deviceIndex].productDescription << L"'"<< std::endl;
+		//hid_close(handle);
+//		wprintf(L"device name '%s'\n", testw);//devices[deviceIndex].productDescription);
+//		wprintf(L"would open %c\n", testw);//devices[deviceIndex].productDescription);
+		//		if (handle = hid_open(devices[deviceIndex].vendorID, devices[deviceIndex].productID, NULL))
 //			printf("opened haitek\n");
 //		else
 //			printf("didnt open\n");	
 	}
+	return 1;
 }
 
 
@@ -162,11 +185,16 @@ int SaitekX52controller::update(){
 	//	aux=(double)((buf[1]&0x3<<6));//+buf[0];
 	aux=(double)((buf[1]&0x7)<<7)+(buf[0]>>1);	
 	aux /= 1024.0;
-	if (aux != axes[0])
+	checkChanged(aux, 0);
+	/*
+	 if (aux != axes[0])
 	{
 		axes[0] = aux;
+		axesChanged[0] = 1;
 		returnVal = 1;
-	}
+	} else
+		axesChanged[0] = 0;
+*/
 	
 	//xValue = aux/1024.0;
 	//	if (aux <= 512) axes[0] = (aux - 512) / 512;
@@ -175,11 +203,7 @@ int SaitekX52controller::update(){
 	//original line: aux = (double)(((buf[2]&0xF)<<8) + buf[1]>>2);
 	aux = (double)((((buf[2]&0x3F)<<4))) + (buf[1]>>4);//not 6?
 	aux /= 1024.0;
-	if (aux != axes[1])
-	{
-		axes[1] = aux;
-		returnVal = 1;
-	}
+	checkChanged(aux, 1);
 	
 	
 	//	yValue = aux/1024.0;
@@ -187,16 +211,28 @@ int SaitekX52controller::update(){
 	//		else axes[1] = (aux - 511) / 512;
 	
 	aux = (double)(((buf[3])<<8) + buf[2]>>6);
-	axes[2] = aux;///1024.0;
+	aux /= 1024.0;
+	checkChanged(aux, 2);
+	
 	//	if (aux <= 512) axes[2] = (aux - 512) / 512;
 	//	else axes[2] = (aux - 511) / 512;
 	
 	// (0,255) Scaled to (0,1)
-	axes[3] = (255 - (double)buf[4]) / 255.0;
-	axes[4] = (255 - (double)buf[5]) / 255.0; // xRot
-	axes[5] = (255 - (double)buf[6]) / 255.0; // yRot
-	axes[6] = (255 - (double)buf[7]) / 255.0; // Slider
+	aux = (255 - (double)buf[4]) / 255.0;
+	checkChanged(aux, 3);
 	
+//	axes[4] = (255 - (double)buf[5]) / 255.0; // xRot
+	aux = (255 - (double)buf[5]) / 255.0;
+	checkChanged(aux, 4);
+	
+	//axes[5] = (255 - (double)buf[6]) / 255.0; // yRot
+	aux = (255 - (double)buf[6]) / 255.0;
+	checkChanged(aux, 5);
+	
+	
+//	axes[6] = (255 - (double)buf[7]) / 255.0; // Slider
+	aux = (255 - (double)buf[7]) / 255.0;
+	checkChanged(aux, 6);
 	
 	// | 0=Trigger L1 | 1=Fire | 2=A | 3=B | 4=C | 5=Pinkie | D=6 | E=7
 	// | 8=T1 | 9=T2 | 10=T3 | 11=T4 | 12=T5 | 13=T6 | 14=Trigger L2 | 15=LeftMouse
@@ -213,7 +249,17 @@ int SaitekX52controller::update(){
 	else if (buf[10] & (1 << 1)) buttons[16] = 1;
 	else buttons[16] = 0;
 	
-	return returnVal;
+	return 1;//returnVal; - used in mainComponent to see if there is value change
 }
 
-
+int SaitekX52controller::checkChanged(double& aux, int index){
+	if (aux != axes[index])
+	{
+		axes[index] = aux;
+		axesChanged[index] = 1;
+		return 1;
+	} else{
+		axesChanged[index] = 0;
+		return 0;
+	}
+}

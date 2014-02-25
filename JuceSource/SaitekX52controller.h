@@ -15,6 +15,7 @@
 
 #define MAX_STR 255
 #define BUTTONS_LENGTH 40
+#define AXES_LENGTH 40
 
 //when JUCE loads this we go through and find the possible devices
 
@@ -35,17 +36,23 @@ public:
 	void oldUpdate();
 	
 	int openDevice(int deviceIndex);
+	int checkChanged(double& aux, int index);
 	
 	//vars
 	//hid vars
 	int res;
 	unsigned char buf[65];
 	unsigned char store_buf[65];
+
+	
 	wchar_t wstr[MAX_STR];
 	hid_device *handle;
 	
-	float axes[8];
+	float axes[AXES_LENGTH];
+	int axesChanged[AXES_LENGTH];
+	
 	bool buttons[BUTTONS_LENGTH];//for now
+	int buttonsChanged[BUTTONS_LENGTH];
 	
 	std::vector<HIDdevice> devices;
 };

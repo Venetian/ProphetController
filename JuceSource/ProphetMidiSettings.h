@@ -53,6 +53,8 @@ public:
 	int getLSB(int val);
 	void createNRPNlist();
 	
+	//int checkParameterInRange(parameter, value)
+	
 	ProphetNRPN myProph;
 	std::vector<ProphetNRPN> nrpnList;
 };

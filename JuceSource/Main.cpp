@@ -61,7 +61,7 @@ public:
     class MainWindow    : public DocumentWindow
     {
     public:
-        MainWindow()  : DocumentWindow ("MainWindow",
+        MainWindow()  : DocumentWindow ("Saitek Prophet Controller",
                                         Colours::lightgrey,
                                         DocumentWindow::allButtons)
         {

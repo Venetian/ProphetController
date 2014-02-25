@@ -29,10 +29,11 @@ void ProphetMidiSettings::createNRPNlist(){
 	//, NOISE_LEVEL_A,127);
 //	nrpnList.push_back(test1);
 	
+	nrpnList.push_back(ProphetNRPN((String)"None", 0, 127));	
 	nrpnList.push_back(ProphetNRPN((String)"Oscillator 1 Shape", 2, 103));
 	nrpnList.push_back(ProphetNRPN((String)"Oscillator 1 Glide", 3, 127));
 	nrpnList.push_back(ProphetNRPN((String)"Oscillator 2 Shape", 7, 103));
-	nrpnList.push_back(ProphetNRPN((String)"Oscillator 2 Shape", 8, 127));
+	nrpnList.push_back(ProphetNRPN((String)"Oscillator 2 Glide", 8, 127));
 	
 	
 	nrpnList.push_back(ProphetNRPN((String)"Noise Level A", 14, 127));
@@ -49,8 +50,10 @@ void ProphetMidiSettings::createNRPNlist(){
 	nrpnList.push_back(ProphetNRPN((String)"Filter Env Sustain", 25, 127));
 	nrpnList.push_back(ProphetNRPN((String)"Filter Env Release", 26, 127));
 	
+	nrpnList.push_back(ProphetNRPN((String)"LFO 1 Frequency", 37, 166));
 	nrpnList.push_back(ProphetNRPN((String)"LFO 1 Shape A", 38, 4));
-	nrpnList.push_back(ProphetNRPN((String)"LFO 1 Amount A", 39, 43));
+	nrpnList.push_back(ProphetNRPN((String)"LFO 1 Amount A", 39, 127));
+	nrpnList.push_back(ProphetNRPN((String)"LFO 1 Mod Destination", 40, 43));
 
 }
 
